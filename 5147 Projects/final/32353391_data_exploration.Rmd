@@ -1,0 +1,333 @@
+---
+title: "Data Exploration"
+output: html_document
+date: '2022-04-08'
+---
+
+```{r setup, include=FALSE}
+
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+#install.packages("naniar")
+library(dplyr)
+library(tidyverse)
+library(naniar)
+library(tidyr)
+library(ggplot2)
+library(ggmap)
+library(leaflet)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+data1 <- read.csv("data_cleaned_2021.csv")
+data2 <- read.csv("Data Science Jobs Salaries.csv")
+data1
+data2
+```
+
+
+```{r}
+deldata1 <- data1 %>%
+  select(-Salary.Estimate, -Company.Name, -Competitors, -Hourly, -Employer.provided) %>%
+  rename('Company_Name' = company_txt) %>%
+  mutate(Skill_Count = sum(data1$Python,data1$spark,data1$google_an))
+
+
+skills <- deldata1 %>%
+  select(Python:google_an)
+
+skills <- skills %>%
+  mutate(Skills_Count = rowSums(skills))
+
+```
+
+
+
+```{r}
+deldata1 <- unique(deldata1)
+
+deldata1$Founded %>% replace_na(-1)
+
+write_csv(deldata1,"deldata.csv")
+```
+
+
+
+```{r}
+unique(deldata1$Revenue)
+unique(deldata1$Job.Title)
+unique(deldata1$Location)
+unique(deldata1$Headquarters)
+unique(deldata1$Founded)
+unique(deldata1$Type.of.ownership)
+unique(deldata1$Industry)
+unique(deldata1$Sector)
+unique(deldata1$job_title_sim)
+```
+
+```{r}
+unique(data2)
+unique(data2$employment_type)
+unique(data2$job_title)
+unique(data2$salary_currency)
+
+```
+
+```{r}
+ratevsal <- deldata1 %>%
+  group_by(Rating, Avg.Salary.K.) %>%
+  summarize(Rating, Avg.Salary.K.) %>%
+  filter(Rating != -1)
+write_csv(ratevsal,"ratevsal.csv")
+
+ggplot(ratevsal,
+       aes(x = Rating,
+           y = Avg.Salary.K.))  +
+  geom_point() +
+  ggtitle("Company Rating Against Average Salary") +
+  geom_smooth()+
+  xlab("Company Rating") +
+  ylab("Average Salary (K)")
+```
+
+```{r}
+sizevsal <- deldata1 %>%
+  group_by(Size) %>%
+  summarize(Avg.Salary.K.) %>%
+  filter(Size != "unknown") %>%
+ #mutate(lowerSize = as.numeric(gsub(".*?([0-9]+).*?", "\\1", sizevsal$Size))) #%>%
+  arrange(Size)
+            
+ggplot(sizevsal,
+       aes(x = Size,
+           y = Avg.Salary.K.))  +
+  geom_boxplot() +
+  ggtitle("Company Size Against Average Salary") +
+  xlab("Company Size") +
+  ylab("Average Salary (K)")
+```
+
+```{r}
+foundvsal <- deldata1 %>%
+  group_by(Founded, Avg.Salary.K.) %>%
+  summarize(Founded, Avg.Salary.K.) %>%
+  filter(Founded != -1)
+  
+
+ggplot(foundvsal,
+       aes(x = Founded,
+           y = Avg.Salary.K.))  +
+  geom_point() +
+  ggtitle("Company Founded Year Against Average Salary") +
+  geom_smooth()+
+  xlab("Year") +
+  ylab("Average Salary (K)")
+```
+
+```{r}
+ownvsal <- deldata1 %>%
+  group_by(Type.of.ownership) %>%
+  summarize(avgsal = mean(Avg.Salary.K.))
+
+ggplot(ownvsal,
+       aes(x = avgsal,
+           y = Type.of.ownership))  +
+  geom_col() +
+  ggtitle("Type of Ownership Against Average Salary") +
+  xlab("Average Salary (K)") +
+  ylab("Type of Ownership")
+```
+
+
+```{r}
+top5indvsal <- deldata1 %>%
+  group_by(Industry) %>%
+  summarize(avgsal = mean(Avg.Salary.K.)) %>%
+  arrange(desc(avgsal)) #%>%
+  #head(5)
+
+ggplot(top5indvsal,
+       aes(x = avgsal,
+           y = Industry))  +
+  geom_col() +
+  ggtitle("Top 5 Industry which Data Scientists has Highest Average Salary") +
+  xlab("Average Salary (K)") +
+  ylab("Industry")
+```
+
+```{r}
+revvsal <-  deldata1 %>%
+  group_by(Revenue) %>%
+  summarize( avgsal = mean(Avg.Salary.K.)) %>%
+  filter(Revenue != "Unknown / Non-Applicable")
+
+ggplot(revvsal,
+       aes(x = avgsal,
+           y = Revenue))  +
+  geom_col() +
+  ggtitle("Revenue of a Company Versus Average Salary") +
+  xlab("Average Salary (K)") +
+  ylab("Revenue")
+```
+```{r}
+python <- deldata1 %>%
+  group_by(Python) %>%
+  summarize(avgsal = mean(Avg.Salary.K.))
+
+ggplot(python,
+       aes(x = Python,
+           y = avgsal))  +
+  geom_col() +
+  ggtitle("Revenue of a Company Versus Average Salary") +
+  xlab("Average Salary (K)") +
+  ylab("Revenue")
+```
+
+
+
+```{r}
+python <- deldata1 %>%
+  group_by(Python) %>%
+  summarize(mean(Avg.Salary.K.))
+
+spark <- deldata1 %>%
+  group_by(spark) %>%
+  summarize(mean(Avg.Salary.K.))
+
+aws <- deldata1 %>%
+  group_by(aws) %>%
+  summarize(mean(Avg.Salary.K.))
+
+excel <- deldata1 %>%
+  group_by(excel) %>%
+  summarize(mean(Avg.Salary.K.))
+
+sql <- deldata1 %>%
+  group_by(sql) %>%
+  summarize(mean(Avg.Salary.K.))
+
+sas <- deldata1 %>%
+  group_by(sas) %>%
+  summarize(mean(Avg.Salary.K.))
+
+keras <- deldata1 %>%
+  group_by(keras) %>%
+  summarize(mean(Avg.Salary.K.))
+
+pytorch <- deldata1 %>%
+  group_by(pytorch) %>%
+  summarize(mean(Avg.Salary.K.))
+
+scikit <- deldata1 %>%
+  group_by(scikit) %>%
+  summarize(mean(Avg.Salary.K.))
+
+tensor <- deldata1 %>%
+  group_by(tensor) %>%
+  summarize(mean(Avg.Salary.K.))
+
+hadoop <- deldata1 %>%
+  group_by(hadoop) %>%
+  summarize(mean(Avg.Salary.K.))
+
+tableau <- deldata1 %>%
+  group_by(tableau) %>%
+  summarize(mean(Avg.Salary.K.))
+
+bi <- deldata1 %>%
+  group_by(bi) %>%
+  summarize(mean(Avg.Salary.K.))
+
+flink <- deldata1 %>%
+  group_by(flink) %>%
+  summarize(mean(Avg.Salary.K.))
+
+mongo <- deldata1 %>%
+  group_by(mongo) %>%
+  summarize(mean(Avg.Salary.K.))
+
+google_an <- deldata1 %>%
+  group_by(google_an) %>%
+  summarize(mean(Avg.Salary.K.))
+
+python
+spark 
+aws 
+excel
+sql
+sas
+keras
+pytorch
+scikit
+tensor
+hadoop
+tableau
+bi
+flink
+mongo
+google_an
+
+full_join(python,spark)
+
+
+
+```
+
+
+```{r}
+experience <- data2 %>%
+  group_by(experience_level) %>%
+  summarise(avgsal = mean(salary_in_usd))
+
+ggplot(experience,
+       aes(x = experience_level,
+           y = avgsal))  +
+  geom_col() +
+  ggtitle("Seniority Versus Average Salary") +
+  xlab("Seniority") +
+  ylab("Average Salary")
+```
+
+
+```{r}
+data2 %>%
+  group_by(company_location) %>%
+  summarise(mean(salary_in_usd))
+```
+
+```{r}
+unique(data2$employee_residence)
+country <- read_csv("Country.csv")
+
+data2 <- data2 %>%
+  mutate(country = company_location) 
+```
+
+```{r}
+addcountry1 <- left_join(data2,country)
+
+addcountry <- addcountry1 %>%
+  group_by(country, latitude, longitude) %>%
+  summarize(salary = round(mean(salary_in_usd),2))
+
+```
+
+```{r}
+
+map <- leaflet(data = addcountry) %>% 
+  addTiles() %>%
+  addCircleMarkers(~longitude, ~latitude, radius = ~ (addcountry$salary)/10000)
+```
+
+

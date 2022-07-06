@@ -1,0 +1,60 @@
+---
+title: "PE1"
+output: html_document
+date: '2022-03-16'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r package}
+install.packages("tidyverse")
+install.packages("dplyr")
+install.packages("stringr")
+install.packages("lubridate")
+library(tidyverse)
+library(stringr)
+library(dplyr)
+library(lubridate)
+
+```
+
+
+```{r read}
+
+butterfly <- read_csv("/Users/owencheng/MyProjects/FIT5147/5147 PE1/Butterfly_biodiversity_survey_2017_PE1.csv")
+nodupbutterfly <- unique(butterfly)
+```
+
+
+```{r remove negative number}
+nodupbutterfly %>%
+  filter(ButterflyCount >= 0)
+```
+
+```{r remove negative number}
+noneg <- nodupbutterfly %>%
+  filter(ButterflyCount >= 0) 
+```
+
+```{r remove negative number}
+replacesym <- noneg %>%
+  mutate(Site = gsub("Fitzroy/Treasury Gardens", "Fitzroy-Treasury Gardens",Site))
+```
+
+```{r add wday}
+addwday <- replacesym %>%
+  mutate(Weekday = wday(replacesym$DateTime, label = TRUE, week_start = 1))
+```
+
+
+```{r add wday}
+addhr <- addwday %>%
+  mutate(Hour = hour(dmy_hms(addwday$DateTime))) %>%
+  group_by(Hour,Site)
+
+```
+
+
+

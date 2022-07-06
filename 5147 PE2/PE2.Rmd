@@ -1,0 +1,75 @@
+---
+title: "PE2"
+output: html_document
+date: '2022-03-28'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r librarys}
+#install.packages("ggplot2")
+#install.packages("leaflet")
+#install.packages("leaflegend")
+library(dplyr)
+library(ggplot2)
+library(ggmap)
+library(lubridate)
+library(leaflet)
+library(leaflegend)
+```
+
+```{r Read data, echo=FALSE}
+data <- read.csv("Butterfly_biodiversity_survey_2017_PE2.csv")
+
+```
+
+```{r Read data, echo=FALSE}
+top5 <- data %>%
+  group_by(Site) %>% 
+  summarize(Sum = sum(ButterflyCount))%>%
+  arrange(desc(Sum)) %>%
+  head(5)
+top5
+```
+
+```{r plot data, echo=FALSE}
+top5plot <- ggplot(top5, aes(x = Site, y = Sum)) + 
+geom_col() + 
+  ggtitle("Total Number of butterflies observed in 2017 Grouped by Site")
+
+```
+
+```{r Read data, echo=FALSE}
+top5withdate <- data %>%
+  mutate(date = date(mdy_hms(Datetime)))%>%
+  filter(Site == " Royal Park" | Site == " Womens Peace Gardens" | Site == " Carlton Gardens South" | Site == " Fitzroy-Treasury Gardens" | Site == " Westgate Park") %>%
+  group_by(Site,date) %>%
+  summarize(Sum = sum(ButterflyCount)) 
+top5withdate 
+```
+
+```{r Read data, echo=FALSE}
+top5withdateplot <- ggplot(top5withdate, aes(x = date, y = Sum, fill = Site)) + 
+geom_col() +
+  ggtitle("Total Number of Butterflies Observed Each Day")
+```
+
+```{r Read data, echo=FALSE}
+mapdata <- data %>%
+  group_by(Site) %>% 
+  summarize(Sum = sum(ButterflyCount), lati = mean(Lat), longi = mean(Lon))%>%
+  arrange(desc(Sum))
+```
+
+
+```{r Read data, echo=FALSE}
+butmap <- leaflet(data = mapdata) %>% addTiles() %>%
+  addCircleMarkers(~longi, ~lati, radius = ~ mapdata$Sum, popup = paste0(mapdata$Site, "<br>", "Total Number of Butterfly:",mapdata$Sum))
+
+```
+
+
+
+

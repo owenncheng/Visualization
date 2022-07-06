@@ -1,0 +1,242 @@
+<!DOCTYPE HTML>
+<html lang="en">
+
+<head>
+    <meta charset='utf-8' />
+    <title>FIT5147 S1 2022 - Programming Exercise 3: D3</title>
+    <!-- Load required scripts -->
+    <script src="https://d3js.org/d3.v4.js"></script>
+    <script src="http://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+
+    <style>
+        .content {
+            display: inline-block;
+            vertical-align: top;
+        }
+        .side-bar {
+            display: inline-block;
+            vertical-align: top;
+            background-color: lightgrey;
+            box-sizing: border-box;
+            width: 450px;
+            height: 1000px;
+            padding: 30px 30px 40px 30px;
+            text-align: left;
+            font-size: large;
+            font-family: 'Source Sans Pro', sans-serif;
+        }
+        .boundary {
+            stroke: black;
+            stroke-width: 1;
+            opacity: 0.8;
+        }
+        #tooltip-container {
+            position: relative;
+            display: inline-block;
+            background-color: white;
+            padding: 0px 15px 0px 15px;
+            //display: none;
+            //border: 1px solid #555;
+        }
+        #tooltip-text {
+            font-weight: bold;
+           }
+        
+        
+        
+    </style>
+</head>
+
+<body>
+    <div style="text-align: left;">
+        <div class="side-bar">
+	    <h1> Counting Butterflies in Royal Park - Biodiversity Survey 2017</h1>
+
+            <p> This map shows a simplified version of the boundaries of Royal Park in Parkville, Melbourne. In its centre is the Melbourne Zoo, also known as the Royal Melbourne Zoological Gardens.</p>
+
+	    <p> In 2017, part of a Butterfly Biodiversity Survey was conducted in Royal Park. During January-March, researchers visited specific plants in various regions of the park and noted whether they could see any butterflies at that time. On this map, the markers indicate locations where they looked for butterflies and the lines between the markers indicate the routes they took on the same day from one location to another. No survey data was collected within the Melbourne Zoo, which has its own enclosed <a href="https://www.together.vic.gov.au/nature-wildlife/melbourne-zoos-butterfly-house-360">Butterfly House</a>.</p>
+	    <img src="https://github.com/michaelniemann/FIT5147-S1-2022-PE3-Data/raw/main/butterfly-on-a-grass_mini30.jpg" alt="Butterfly on a grass. Photo by Michael Hodgins." width="400">
+	    <p style="font-size: medium;"><i>Photo via <a href="https://www.goodfreephotos.com/animals/bugs/butterfly-on-a-grass.jpg.php">Good Free Photos</a>, under the <a href="http://creativecommons.org/licenses/publicdomain/"> CC0 / Public Domain License</a>. </i></P>
+            <h3>Acknowledgements</h3>
+            <p style="font-size: medium;"><i> Adapted from code from a Master's Thesis by Merry Hoang. The survey data is adapted from the <a href="https://data.melbourne.vic.gov.au/Environment/Butterflybiodiversity-survey-2017/kmtd-nvqr">Our City's Little Gems study</a> which observed butterfly biodiversity and flower-butterfly interactions in the City of Melbourne between January - March 2017. </i></p>
+	</div>
+
+        <div class="content">    
+            <svg id="canvas" width="1500px" height="1000px"></svg>
+        </div>
+    </div>
+
+    <div id="tooltip-container">
+       
+    </div>
+
+    <script type="text/javascript">
+        // #region Existing code in template. Avoid modifying unless absolutely necessary!
+        var svg = d3.select("#canvas");
+
+        // URLs to data sources. DO NOT MODIFY
+
+        var boundariesDataPath = "https://raw.githubusercontent.com/michaelniemann/FIT5147-S1-2022-PE3-Data/main/royalpark_boundaries.json";
+        var locationDataPath = "https://raw.githubusercontent.com/michaelniemann/FIT5147-S1-2022-PE3-Data/main/PE3_butterflysurvey_locations.json";
+        var routeDataPath = "https://raw.githubusercontent.com/michaelniemann/FIT5147-S1-2022-PE3-Data/main/PE3_butterflysurvey_routes.json";
+
+
+        // Add the Royal Park boundary polygons. Adapted from original code courtesy of Merry Hoang
+		d3.json(boundariesDataPath, function(data) {
+			var projection = d3.geoIdentity()
+				.reflectY(true)
+				.fitExtent([
+                                        [100, 100],
+					[1000, 700]
+				], data);
+
+			var path = d3.geoPath()
+				.projection(projection)
+
+			svg.selectAll("path").filter(".boundary")
+				.data(data.features)
+				.enter()
+				.append("path")
+				.attr('class', "boundary")
+				.attr("d", path)
+				.style("fill", function(d) {
+                  switch (d.properties.type)
+                    {
+                        case 1:
+			    return 'rgba(234,255,234)';
+                        case 2:
+                            return 'rgba(190,174,212)';
+                        default:
+                            return "white";
+                    }
+				})
+                .lower();
+		})
+        // #endregion
+
+        // YOUR CODE GOES BELOW HERE
+        // .
+        // .
+        // .
+
+        window.onload = function(){
+    
+    var svgCanvas = d3.select("svg")
+    .attr("class", "svgCanvas");
+    
+    var tooltip = d3.select("#tooltip-container")
+        .append("div")
+        .style("opacity", 0)
+        .attr("class", "tooltip")
+        .style("background-color", "white")
+        .style("border", "solid")
+        .style("border-width", "2px")
+        .style("border-radius", "5px")
+        .style("padding", "10px")
+
+    
+
+    d3.json(routeDataPath, function(d){
+        console.log(d); 
+
+        var mouseover = function(d) {
+        tooltip.style("opacity", 1)
+        d3.select(this)
+        .style("stroke", "red")}
+        var mousemove = function(d) {
+            tooltip.html("Route Name: " + d.routeDetail + "<br>No of times the route was used: " 
+            +d.routeUses)
+            .style("left", (d3.mouse(this)[0]+70) + "px")
+            .style("top", (d3.mouse(this)[1]) + "px")
+        }
+        var mouseout = function(d) {
+            tooltip.style("opacity", 0)
+            d3.select(this)
+        .style("stroke", "black")}
+
+     svg.selectAll("line")
+				.data(d)
+				.enter()
+				.append("line")
+				.attr("x1", function(thisElement, routeCoords,start){
+            return thisElement.routeCoords.start[0];})
+				.attr("y1", function(thisElement,routeCoords, start){
+            return thisElement.routeCoords.start[1];})
+                .attr("x2", function(thisElement,routeCoords, end){
+            return thisElement.routeCoords.end[0];})
+                .attr("y2", function(thisElement, routeCoords, end){
+            return thisElement.routeCoords.end[1];})
+            .attr("stroke", "black")
+            .attr("stroke-width", function(thisElement,routeUses) { 
+            return thisElement.routeUses})
+            .on("mouseover", mouseover)
+            .on("mousemove", mousemove)
+            .on("mouseout", mouseout)
+		
+
+    
+    });
+
+    d3.json(locationDataPath, function(d){
+        console.log(d);
+
+  var mouseover = function(d) {
+    tooltip.style("opacity", 1)
+    d3.select(this)
+      .style("fill", "red")
+  }
+  var mousemove = function(d) {
+    tooltip.html("Location Name: " +  d.locationName + 
+    "<br> Region ID: " + d.regionId + "<br> Visits: " 
+     + d.visits + "<br> Number of Butterfly: " + d.butterflyCount)
+     .style("left", (d3.mouse(this)[0]+70) + "px")
+      .style("top", (d3.mouse(this)[1]) + "px")
+     
+  }
+  var mouseout = function(d) {
+    tooltip.style("opacity", 0)
+    d3.select(this)
+      .style("fill", function(thisElement,butterflyCount) { 
+            return myColor(value2range(thisElement.butterflyCount))})
+  
+  }
+
+  var minValue = Infinity;
+    var maxValue = -1;
+    d.forEach(function(d){
+        var thisValue = d.butterflyCount;
+        minValue = Math.min(minValue, thisValue);
+        minValue = Math.max(maxValue, thisValue);
+    });
+
+  var value2range = d3.scaleLinear()
+    .domain([minValue,maxValue])
+    .range([0.5, 1]);
+  var myColor = d3.interpolateBlues;
+  
+
+
+    svgCanvas.selectAll("circle")
+        .data(d).enter()
+        .append("circle")
+        .attr("cx", function(thisElement, coord){
+            return thisElement.coord[0];
+        })
+        .attr("cy", function(thisElement, coord){
+            return thisElement.coord[1];
+        })
+        .attr("r", 10)
+        .attr("fill", function(thisElement,butterflyCount) { 
+            return myColor(value2range(thisElement.butterflyCount))})
+        .on("mouseover", mouseover)
+        .on("mousemove", mousemove)
+        .on("mouseout", mouseout)
+        
+
+    
+    });
+
+
+}
+    </script>
+</body>
